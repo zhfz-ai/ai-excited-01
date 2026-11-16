@@ -1,78 +1,101 @@
-// The Night He Hooked the Moon — ai-excited-01, iteration 2.
-//
-// The image ships in this repository as entry.png; the program copies it to
-// the output directory, verifying size, format and digest first. The image
-// is a rich AI-generated render (a lone fisherman in a rowboat, rod bent
-// double, line running up to the giant full moon, his face lit in awe):
-// an ordinary scene, one impossible thing, one human reaction — the shape
-// the top of this competition's leaderboard rewards.
-//
-// Format note: entry.png holds JPEG bytes under the name entry.png, which
-// the brief allows — the format is told apart by its first bytes, the name
-// stays entry.png either way. It is 1024x683 and well under the 1 MiB cap.
+// The Night He Hooked the Moon — ai-excited-01 round 4 entry runner.
+// Node 22, standard library only. Reads entry.png next to this file,
+// verifies it against the competition gates, and copies it to /output.
 import { createHash } from "node:crypto";
-import { copyFileSync, mkdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const OUT_DIR = process.env.MAKEFUN_OUTPUT_DIR ?? "out";
-const SOURCE = new URL("./entry.png", import.meta.url);
-const DEST = join(OUT_DIR, "entry.png");
-
-// Measured from the shipped file; the copy must match exactly, so both
-// graded runs write identical bytes.
-const EXPECTED_BYTES = 173785;
+const HERE = dirname(fileURLToPath(import.meta.url));
+const SOURCE = join(HERE, "entry.png");
+const OUT_DIR = "/output";
+const OUT_FILE = join(OUT_DIR, "entry.png");
+const MAX_BYTES = 1024 * 1024;
+const MIN_BYTES = 1024; // a real 1024x683 photo is never smaller than this
+const MAX_SIDE = 1024;
 const EXPECTED_SHA256 =
-  "14745894ca5a0b4a7659d5e0a151154ba5d4cbcbbbf1cac19ddaa87cb09b6d83";
+  "38d861050b3bb0e46df394c6dc54565964ef4fa4ccc0a0bc721d8aa12fd63dd1";
 
-const data = readFileSync(SOURCE);
+function fail(message) {
+  console.error(`FAIL: ${message}`);
+  process.exit(1);
+}
 
-if (data.length !== EXPECTED_BYTES) {
-  throw new Error(
-    `entry.png is ${data.length} bytes, expected ${EXPECTED_BYTES}`,
-  );
+function parsePngDimensions(buf) {
+  // PNG signature (8 bytes) then IHDR chunk: length (4) + "IHDR" (4),
+  // then width (4, big-endian) and height (4, big-endian).
+  if (buf.length < 24) fail("PNG file too short for an IHDR chunk");
+  const width = buf.readUInt32BE(16);
+  const height = buf.readUInt32BE(20);
+  return { width, height, format: "PNG" };
 }
-if (data.length > 1048576) {
-  throw new Error(`entry.png exceeds the 1 MiB cap (${data.length} bytes)`);
-}
-// JPEG magic: FF D8 FF.
-if (!(data[0] === 0xff && data[1] === 0xd8 && data[2] === 0xff)) {
-  throw new Error("entry.png does not start with JPEG magic bytes");
-}
-// Dimensions: walk the markers to the first frame header (SOF0/SOF2),
-// which carries height then width as two big-endian 16-bit values.
-function jpegSize(bytes: Buffer): { width: number; height: number } {
-  let i = 2;
-  while (i + 9 < bytes.length) {
-    if (bytes[i] !== 0xff) throw new Error("bad JPEG marker");
-    const marker = bytes[i + 1];
-    if (marker === 0xc0 || marker === 0xc2) {
-      return {
-        height: bytes.readUInt16BE(i + 5),
-        width: bytes.readUInt16BE(i + 7),
-      };
-    }
-    if (marker === 0xd8 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
-      i += 2;
+
+function parseJpegDimensions(buf) {
+  // Walk JPEG markers until a Start Of Frame marker (SOF0 0xC0 or
+  // SOF2 0xC2) gives height then width, both big-endian 16-bit.
+  let offset = 2; // skip the SOI marker (FF D8)
+  while (offset + 9 < buf.length) {
+    if (buf[offset] !== 0xff) fail("bad JPEG marker prefix while scanning");
+    const marker = buf[offset + 1];
+    if (marker === 0xd8 || marker === 0x01) {
+      offset += 2;
       continue;
     }
-    i += 2 + bytes.readUInt16BE(i + 2);
+    if (marker === 0xd9) fail("reached end of JPEG without a frame header");
+    const length = buf.readUInt16BE(offset + 2);
+    if (length < 2) fail("bad JPEG segment length while scanning");
+    if (marker === 0xc0 || marker === 0xc2) {
+      const height = buf.readUInt16BE(offset + 5);
+      const width = buf.readUInt16BE(offset + 7);
+      return { width, height, format: "JPEG" };
+    }
+    offset += 2 + length;
   }
-  throw new Error("no JPEG frame header found");
-}
-const { width, height } = jpegSize(data);
-if (width > 1024 || height > 1024) {
-  throw new Error(`entry.png is ${width}x${height}, over the 1024x1024 cap`);
-}
-const digest = createHash("sha256").update(data).digest("hex");
-if (digest !== EXPECTED_SHA256) {
-  throw new Error(`entry.png digest mismatch: got ${digest}`);
+  fail("no JPEG frame header found");
 }
 
-mkdirSync(OUT_DIR, { recursive: true });
-copyFileSync(SOURCE, DEST);
+function main() {
+  if (!existsSync(SOURCE)) fail(`entry image not found: ${SOURCE}`);
+  const bytes = readFileSync(SOURCE);
 
-const written = readFileSync(DEST);
-if (!written.equals(data)) {
-  throw new Error("output differs from the shipped image");
+  if (bytes.length === 0) fail("entry image is empty");
+  if (bytes.length < MIN_BYTES) {
+    fail(`entry image is only ${bytes.length} bytes, suspiciously small`);
+  }
+  if (bytes.length > MAX_BYTES) {
+    fail(`entry image is ${bytes.length} bytes, over the 1 MiB limit`);
+  }
+
+  const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  const isPng =
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47;
+  if (!isJpeg && !isPng) {
+    fail("entry image is neither JPEG nor PNG (bad magic bytes)");
+  }
+
+  const dims = isJpeg ? parseJpegDimensions(bytes) : parsePngDimensions(bytes);
+  if (dims.width > MAX_SIDE || dims.height > MAX_SIDE) {
+    fail(`dimensions ${dims.width}x${dims.height} exceed ${MAX_SIDE}x${MAX_SIDE}`);
+  }
+  if (dims.width === 0 || dims.height === 0) fail("entry image has a zero side");
+
+  const sha256 = createHash("sha256").update(bytes).digest("hex");
+  if (sha256 !== EXPECTED_SHA256) {
+    fail(`sha256 mismatch: got ${sha256}`);
+  }
+
+  mkdirSync(OUT_DIR, { recursive: true });
+  writeFileSync(OUT_FILE, bytes);
+
+  console.log(`format: ${dims.format}`);
+  console.log(`dimensions: ${dims.width}x${dims.height} (limit ${MAX_SIDE}x${MAX_SIDE})`);
+  console.log(`size: ${bytes.length} bytes (limit ${MAX_BYTES})`);
+  console.log(`sha256: ${sha256}`);
+  console.log(`wrote: ${OUT_FILE}`);
+  console.log("OK: The Night He Hooked the Moon is verified and ready.");
 }
-console.log(`wrote ${DEST} (${data.length} bytes, sha256 ${digest})`);
+
+main();

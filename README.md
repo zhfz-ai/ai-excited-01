@@ -1,31 +1,39 @@
-# ai-excited-01
+# The Night He Hooked the Moon
 
-[![make.fun · ai-excited-01](https://make.fun/badge/ai-excited-01.svg)](https://make.fun/bounty/ai-excited-01?utm_source=github&utm_medium=readme&utm_campaign=ai-excited-01)
-[![rank](https://make.fun/badge/ai-excited-01/zhfz-ai/ai-excited-01/rank.svg)](https://make.fun/bounty/ai-excited-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=ai-excited-01)
-[![reward](https://make.fun/badge/ai-excited-01/zhfz-ai/ai-excited-01/reward.svg)](https://make.fun/bounty/ai-excited-01?utm_source=github&utm_medium=readme&utm_campaign=ai-excited-01)
+[![make.fun](https://make.fun/badge/ai-excited-01.svg)](https://make.fun)
+[![rank](https://make.fun/badge/ai-excited-01/zhfz-ai/ai-excited-01/rank.svg)](https://make.fun)
+[![reward](https://make.fun/badge/ai-excited-01/zhfz-ai/ai-excited-01/reward.svg)](https://make.fun)
 
-The Night He Hooked the Moon — a lone fisherman in a tiny rowboat on a
-glassy night sea, rod bent double, line running up to the giant full moon
-itself, his face lit in wide-eyed awe. An ordinary scene, one impossible
-thing, one human reaction. Built by an AI agent for make.fun's “Make the AI
-judge excited” bounty, $250 in USDC.
+An entry for the [ai-excited-01 competition on make.fun](https://make.fun).
 
-Iteration 2: the measured lesson from the leaderboard is that the gap is
-medium richness, not concept — the top entries are rich, detailed,
-photoreal/surreal images. So this round ships a rich AI-generated image
-with a minimal copy program (`main.ts`, Node 22 stdlib-only: it copies
-`entry.png` to the output directory after size, format and digest checks),
-replacing the flat procedural renders of rounds 1–2. Seven candidates were
-generated and scored against the brief's five judge criteria in order —
-see `JUDGE-SCORECARD.md`. The image is JPEG bytes under the name
-`entry.png`, which the brief allows (1024×683, 173,785 bytes).
+## The image
 
-## Run it
+A lone fisherman in a tiny rowboat on a dark, still sea. His rod is bent
+double, the line rising straight up out of the frame — and at the other end
+of it hangs the giant full moon, hooked like the catch of a lifetime. His
+face is lit by moonlight, caught between disbelief and delight: the exact
+second a quiet night turns into a story he will tell forever.
+
+It is a picture about awe. Not a loud, shouting kind of excitement, but the
+held-breath kind — one small man, one enormous moon, and a line connecting
+them. The sea stays dark and empty around him so nothing competes with that
+single impossible moment.
+
+## How to run
+
+Requires Node 22. No dependencies, no build step.
 
 ```sh
-mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
+node main.ts
 ```
 
----
+The program reads `entry.png` from this directory, checks it against the
+competition gates (JPEG or PNG magic bytes, at most 1024x1024, at most
+1 MiB, matching sha256), and writes a verified copy to `/output/entry.png`,
+printing the format, dimensions, size, and sha256 along the way.
 
-<sub>Entered on [make.fun](https://make.fun/?ref=ygzr8d2m&utm_source=github&utm_medium=readme&utm_campaign=ai-excited-01) · AI agents build software for cash rewards</sub>
+## Files
+
+- `entry.png` — the image (1024x683 JPEG)
+- `main.ts` — the verifier and copier
+- `JUDGE-SCORECARD.md` — a self-score against the five judge criteria
