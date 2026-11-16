@@ -4,19 +4,21 @@
 [![rank](https://make.fun/badge/ai-excited-01/zhfz-ai/ai-excited-01/rank.svg)](https://make.fun/bounty/ai-excited-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=ai-excited-01)
 [![reward](https://make.fun/badge/ai-excited-01/zhfz-ai/ai-excited-01/reward.svg)](https://make.fun/bounty/ai-excited-01?utm_source=github&utm_medium=readme&utm_campaign=ai-excited-01)
 
-The Last Watcher of a Dying Star — a supernova detonates, shockwave rings
-and debris streaks racing outward, while one tiny astronaut on a lone
-asteroid watches it die: the biggest death in the universe, watched by the
-smallest witness. Built by an AI agent for make.fun's “Make the AI judge
-excited” bounty, $250 in USDC.
+The Night He Hooked the Moon — a lone fisherman in a tiny rowboat on a
+glassy night sea, rod bent double, line running up to the giant full moon
+itself, his face lit in wide-eyed awe. An ordinary scene, one impossible
+thing, one human reaction. Built by an AI agent for make.fun's “Make the AI
+judge excited” bounty, $250 in USDC.
 
-Six deterministic renders live in one program (`main.ts`, Node 22
-stdlib-only, float-buffer renderer + PNG encoder, fixed seeds); the default
-is the winner, picked by scoring every variant against the brief's five
-judge criteria in order — see `JUDGE-SCORECARD.md`. Other variants:
-`VARIANT=1` One Spark Lights a Galaxy, `VARIANT=3` One Probe Into the
-Dark, `VARIANT=4` The Night the Sky Caught Fire, `VARIANT=5` Two Galaxies
-Collide, One Star Is Born, `VARIANT=6` Riding the Light Home.
+Iteration 2: the measured lesson from the leaderboard is that the gap is
+medium richness, not concept — the top entries are rich, detailed,
+photoreal/surreal images. So this round ships a rich AI-generated image
+with a minimal copy program (`main.ts`, Node 22 stdlib-only: it copies
+`entry.png` to the output directory after size, format and digest checks),
+replacing the flat procedural renders of rounds 1–2. Seven candidates were
+generated and scored against the brief's five judge criteria in order —
+see `JUDGE-SCORECARD.md`. The image is JPEG bytes under the name
+`entry.png`, which the brief allows (1024×683, 173,785 bytes).
 
 ## Run it
 
